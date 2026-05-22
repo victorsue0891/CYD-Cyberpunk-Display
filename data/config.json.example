@@ -1,4 +1,6 @@
 {
     "wifi_ssid": "YOUR_WIFI_SSID",
-    "wifi_pass": "YOUR_WIFI_PASSWORD"
+    "wifi_pass": "YOUR_WIFI_PASSWORD",
+    "timezone": "Asia/Taipei",
+    "gmt_offset": 8
 }

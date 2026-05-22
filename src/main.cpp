@@ -36,14 +36,27 @@ LV_IMG_DECLARE(laughing_man);
 // ????????????????????????????????????????????????????????
 static char wifi_ssid[64] = "";
 static char wifi_pass[64] = "";
+static char timezone_str[64] = "Asia/Taipei";
+static int gmt_offset = 8;
+static char weather_url[256];
 
-// ????????????????????????????????????????????????????????
-// Weather API - Taipei
-// ????????????????????????????????????????????????????????
-const char* WEATHER_URL = "https://api.open-meteo.com/v1/forecast?"
-    "latitude=25.033&longitude=121.5654"
-    "&current_weather=true"
-    "&timezone=Asia%2FTaipei";
+void build_weather_url() {
+    char tz_encoded[64];
+    int j = 0;
+    for (int i = 0; timezone_str[i] && j < 60; i++) {
+        if (timezone_str[i] == '/') {
+            tz_encoded[j++] = '%'; tz_encoded[j++] = '2'; tz_encoded[j++] = 'F';
+        } else {
+            tz_encoded[j++] = timezone_str[i];
+        }
+    }
+    tz_encoded[j] = '\0';
+    snprintf(weather_url, sizeof(weather_url),
+        "https://api.open-meteo.com/v1/forecast?"
+        "latitude=25.033&longitude=121.5654"
+        "&current_weather=true&timezone=%s", tz_encoded);
+}
+
 
 // ????????????????????????????????????????????????????????
 // GITS Color Palette - ?餅挺?
@@ -190,8 +203,9 @@ const char* weather_code_to_icon(int code) {
 // Fetch Weather
 void fetch_weather() {
     if (!wifi_connected) return;
+    build_weather_url();
     HTTPClient http;
-    http.begin(WEATHER_URL);
+    http.begin(weather_url);
     http.setTimeout(10000);
 
     int httpCode = http.GET();
@@ -789,7 +803,9 @@ void load_config() {
     if (!err) {
         strlcpy(wifi_ssid, doc["wifi_ssid"] | "", sizeof(wifi_ssid));
         strlcpy(wifi_pass, doc["wifi_pass"] | "", sizeof(wifi_pass));
-        Serial.printf("Config loaded: SSID=%s\n", wifi_ssid);
+        strlcpy(timezone_str, doc["timezone"] | "Asia/Taipei", sizeof(timezone_str));
+        gmt_offset = doc["gmt_offset"] | 8;
+        Serial.printf("Config loaded: SSID=%s TZ=%s GMT+%d\n", wifi_ssid, timezone_str, gmt_offset);
     }
 }
 
@@ -838,7 +854,7 @@ void setup() {
     connect_wifi();
 
     if (wifi_connected) {
-        configTime(8 * 3600, 0, "pool.ntp.org", "time.nist.gov");
+        configTime(gmt_offset * 3600, 0, "pool.ntp.org", "time.nist.gov");
         fetch_weather();
         update_weather_ui();
         lv_label_set_text(lbl_cyber_brain, "E-BRAIN:LINKED");
