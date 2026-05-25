@@ -107,9 +107,10 @@ static lv_obj_t* lbl_temp;
 static lv_obj_t* lbl_weather_icon;
 static lv_obj_t* lbl_wind;
 static lv_obj_t* lbl_status;
-// Radar
-static lv_obj_t* radar_arc;
-static lv_obj_t* radar_inner;
+// Radar (3 concentric rings: large, mid, small)
+static lv_obj_t* radar_arc;    // large
+static lv_obj_t* radar_mid;    // medium
+static lv_obj_t* radar_small;  // small
 // Prosthetic/Biometric panel (蝢拚???～??
 static lv_obj_t* lbl_cyber_brain;
 static lv_obj_t* lbl_prosthetic;
@@ -144,7 +145,9 @@ static unsigned long last_weather_update = 0;
 static const unsigned long WEATHER_INTERVAL = 600000;
 static unsigned long boot_time;
 static bool wifi_connected = false;
-static int radar_angle = 0;
+static int radar_angle_lg = 0;
+static int radar_angle_md = 0;
+static int radar_angle_sm = 0;
 static int scan_y = 0;
 static int glitch_counter = 0;
 static bool glitch_active = false;
@@ -384,33 +387,61 @@ void create_ui() {
     create_corner_brackets(scr);
 
     // ??? Layer 2: Radar (left panel) ???
-    // Outer ring
+    // Randomize start angles for each ring
+    radar_angle_lg = random(0, 360);
+    radar_angle_md = random(0, 360);
+    radar_angle_sm = random(0, 360);
+
+    // Large ring (110x110)
     radar_arc = lv_arc_create(scr);
     lv_obj_set_size(radar_arc, 110, 110);
     lv_obj_set_pos(radar_arc, 8, 18);
     lv_arc_set_rotation(radar_arc, 0);
     lv_arc_set_range(radar_arc, 0, 360);
-    lv_arc_set_value(radar_arc, 45);
+    lv_arc_set_value(radar_arc, radar_angle_lg);
     lv_arc_set_bg_angles(radar_arc, 0, 360);
     lv_obj_set_style_arc_color(radar_arc, GS_DIM_CYAN, 0);
     lv_obj_set_style_arc_width(radar_arc, 2, 0);
+    lv_obj_set_style_arc_opa(radar_arc, 140, 0);
     lv_obj_set_style_arc_color(radar_arc, GS_ELEC_BLUE, LV_PART_INDICATOR);
     lv_obj_set_style_arc_width(radar_arc, 3, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(radar_arc, 180, LV_PART_INDICATOR);
     lv_obj_remove_style(radar_arc, NULL, LV_PART_KNOB);
     lv_obj_clear_flag(radar_arc, LV_OBJ_FLAG_CLICKABLE);
 
-    // Inner ring
-    radar_inner = lv_arc_create(scr);
-    lv_obj_set_size(radar_inner, 60, 60);
-    lv_obj_set_pos(radar_inner, 33, 43);
-    lv_arc_set_bg_angles(radar_inner, 0, 360);
-    lv_arc_set_value(radar_inner, 0);
-    lv_obj_set_style_arc_color(radar_inner, GS_DIM_CYAN, 0);
-    lv_obj_set_style_arc_width(radar_inner, 1, 0);
-    lv_obj_set_style_arc_color(radar_inner, GS_DIM_GREEN, LV_PART_INDICATOR);
-    lv_obj_set_style_arc_width(radar_inner, 1, LV_PART_INDICATOR);
-    lv_obj_remove_style(radar_inner, NULL, LV_PART_KNOB);
-    lv_obj_clear_flag(radar_inner, LV_OBJ_FLAG_CLICKABLE);
+    // Medium ring (76x76)
+    radar_mid = lv_arc_create(scr);
+    lv_obj_set_size(radar_mid, 76, 76);
+    lv_obj_set_pos(radar_mid, 25, 35);
+    lv_arc_set_rotation(radar_mid, 0);
+    lv_arc_set_range(radar_mid, 0, 360);
+    lv_arc_set_value(radar_mid, radar_angle_md);
+    lv_arc_set_bg_angles(radar_mid, 0, 360);
+    lv_obj_set_style_arc_color(radar_mid, GS_DIM_CYAN, 0);
+    lv_obj_set_style_arc_width(radar_mid, 1, 0);
+    lv_obj_set_style_arc_opa(radar_mid, 120, 0);
+    lv_obj_set_style_arc_color(radar_mid, GS_CYAN, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_width(radar_mid, 2, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(radar_mid, 160, LV_PART_INDICATOR);
+    lv_obj_remove_style(radar_mid, NULL, LV_PART_KNOB);
+    lv_obj_clear_flag(radar_mid, LV_OBJ_FLAG_CLICKABLE);
+
+    // Small ring (44x44)
+    radar_small = lv_arc_create(scr);
+    lv_obj_set_size(radar_small, 44, 44);
+    lv_obj_set_pos(radar_small, 41, 51);
+    lv_arc_set_rotation(radar_small, 0);
+    lv_arc_set_range(radar_small, 0, 360);
+    lv_arc_set_value(radar_small, radar_angle_sm);
+    lv_arc_set_bg_angles(radar_small, 0, 360);
+    lv_obj_set_style_arc_color(radar_small, GS_DIM_CYAN, 0);
+    lv_obj_set_style_arc_width(radar_small, 1, 0);
+    lv_obj_set_style_arc_opa(radar_small, 100, 0);
+    lv_obj_set_style_arc_color(radar_small, GS_PURPLE, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_width(radar_small, 2, LV_PART_INDICATOR);
+    lv_obj_set_style_arc_opa(radar_small, 140, LV_PART_INDICATOR);
+    lv_obj_remove_style(radar_small, NULL, LV_PART_KNOB);
+    lv_obj_clear_flag(radar_small, LV_OBJ_FLAG_CLICKABLE);
 
     // Radar crosshair center
     static lv_point_t rch[] = {{0, 0}, {16, 0}};
@@ -645,10 +676,17 @@ void update_weather_ui() {
 // Update radar sweep + scan line
 // ????????????????????????????????????????????????????????
 void update_radar() {
-    radar_angle = (radar_angle + 6) % 360;
-    lv_arc_set_value(radar_arc, radar_angle);
-    // Counter-rotate inner ring for visual interest
-    lv_arc_set_value(radar_inner, (360 - radar_angle * 2) % 360);
+    // Large ring: clockwise, moderate speed
+    radar_angle_lg = (radar_angle_lg + 5) % 360;
+    lv_arc_set_value(radar_arc, radar_angle_lg);
+
+    // Medium ring: counter-clockwise, faster
+    radar_angle_md = (radar_angle_md + 353) % 360;  // 360-7 = counter-clockwise 7 deg/tick
+    lv_arc_set_value(radar_mid, radar_angle_md);
+
+    // Small ring: clockwise, fastest
+    radar_angle_sm = (radar_angle_sm + 9) % 360;
+    lv_arc_set_value(radar_small, radar_angle_sm);
 
     // Scan line sweeps vertically through bottom panel
     scan_y = (scan_y + 2) % 50;
@@ -826,6 +864,7 @@ void connect_wifi() {
 void setup() {
     Serial.begin(115200);
     boot_time = millis();
+    randomSeed(analogRead(34));  // seed from floating ADC pin for true randomness
 
     tft.init();
     tft.setRotation(1);
